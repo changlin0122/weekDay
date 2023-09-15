@@ -17,25 +17,46 @@
           </div>
           <div v-if="item.state" class="time">
             <Select 
+            v-model="item.startTime"
             size="large"
             style="width:200px"
+            placeholder="起始時間"
             >
-                <Option v-for="item in timeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                <Option disabled>請選擇時間</Option>
+                <Option 
+                v-for="item in timeList" 
+                :value="item.value" 
+                :key="item.value"
+                >
+                    {{ item.label }}
+                </Option>
             </Select>
             <span>-</span>
             <Select 
+            v-model="item.endTime"
             size="large"
             style="width:200px"
+            placeholder="結束時間"
             >
-                <Option v-for="item in timeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                <Option disabled >請選擇時間</Option>
+                <Option 
+                v-for="item in filterTimeList(item.startTime)" 
+                :value="item.value" 
+                :key="item.value"
+                :disabled="item.disabled"
+                >
+                {{ item.label }}
+            </Option>
             </Select>
           </div>
       </div>
+      <button @click="saveData">保存数据</button>
+      <div>{{ dataObject }}</div>
     </div>
   </template>
   
   <script>
-  import { ref } from 'vue'
+  import { ref, computed, watch } from 'vue'
   import { Switch, Select, Option } from 'view-ui-plus';
   
   export default {
@@ -46,72 +67,119 @@
           Option
       },
       setup() {
-          const weekDay = ref([
-              {
-                  day: '星期日',
-                  state: true
-              },
-              {
-                  day: '星期一',
-                  state: true
-              },
-              {
-                  day: '星期二',
-                  state: true
-              },
-              {
-                  day: '星期三',
-                  state: true
-              },
-              {
-                  day: '星期四',
-                  state: true
-              },
-              {
-                  day: '星期五',
-                  state: true
-              },
-              {
-                  day: '星期六',
-                  state: true
-              },
-          ])
+        const weekDay = ref([
+            {
+                day: '星期日',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期一',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期二',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期三',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期四',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期五',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            {
+                day: '星期六',
+                state: true,
+                startTime: '',
+                endTime: ''
+            },
+            
+        ]);
 
-          const timeList = ref([
-              {
-                value: '00 : 00',
-                label: '00 : 00'
-              },
-              {
-                value: '01 : 00',
-                label: '01 : 00'
-              },
-              {
-                value: '02 : 00',
-                label: '02 : 00'
-              },
-              {
-                value: '03 : 00',
-                label: '03 : 00'
-              },
-              {
-                value: '04 : 00',
-                label: '04 : 00'
-              },
-              {
-                value: '05 : 00',
-                label: '05 : 00'
-              },
-              {
-                value: '06 : 00',
-                label: '06 : 00'
-              },
-          ])
+        const timeList = ref([])
+          // 循環時間
+          for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const hourStr = hour.toString().padStart(2, '0');
+                const minuteStr = minute.toString().padStart(2, '0');
+                const timeValue = `${hourStr} : ${minuteStr}`;
+                timeList.value.push({
+                value: timeValue,
+                label: timeValue,
+                });
+            }
+        }
 
-          return {
-              weekDay,
-              timeList
-          }
+        const startTime = ref('')
+        const endTime = ref('')
+
+        // 結束時間不能早於起始時間
+        const filterTimeList = (startTime) => {
+            return timeList.value.map((item) => ({
+                ...item,
+                disabled: item.value <= startTime,
+            }));
+        };
+
+        // 將 startTime 和 endTime 轉為字符串並連接起來
+        const timeString = computed(() => {
+            const timeData = weekDay.value.map((item) => {
+                if (item.state) {
+                    const startIdx = timeList.value.findIndex((timeItem) => timeItem.value === item.startTime)
+                    const endIdx = timeList.value.findIndex((timeItem) => timeItem.value === item.endTime)
+                    const timeRange = Array(timeList.value.length).fill(0)
+                    timeRange.fill(1, startIdx, endIdx + 1)
+                    return timeRange.join('') 
+                } else {
+                    return Array(timeList.value.length).fill(0).join('')
+                }
+            })
+            return timeData
+        })
+
+        // 儲存資料
+        const saveData = () => {
+            const dataObject = {}
+            timeString.value.forEach((str, index) => {
+                dataObject[`week_day${index}`] = str
+            })
+            console.log(dataObject)
+        }
+
+        // 監聽數據
+        watch([weekDay, startTime, endTime], () => {
+            const allDaysHaveTime = weekDay.value.every((day) => day.startTime && day.endTime)
+            if (allDaysHaveTime) {
+                saveData();
+            }
+        })
+
+        return {
+            weekDay,
+            timeList,
+            startTime,
+            endTime,
+            filterTimeList,
+            timeString,
+            saveData
+        }
       }
   }
   </script>
