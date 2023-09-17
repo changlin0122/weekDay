@@ -210,7 +210,7 @@ export default {
       () => {
         saveData();
       },
-      { deep: true } // 这里使用深度监听，以便监视对象内部属性的变化
+      { deep: true }
     );
 
     // 頁面加載時完成一次saveData()
@@ -242,7 +242,6 @@ $text-color: #3e3a39;
   width: 800px;
   height: auto;
   margin: 100px auto 100px auto;
-  // background: #eeeeee;
   .daylist {
     width: 100%;
     height: auto;
